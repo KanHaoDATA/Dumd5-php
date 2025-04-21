@@ -1,0 +1,174 @@
+<!DOCTYPE html><html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Soi Cầu Tài Xỉu</title>
+  <style>
+    @keyframes glow {
+      0% { box-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00; }
+      50% { box-shadow: 0 0 20px #00ff00, 0 0 30px #00ff00; }
+      100% { box-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00; }
+    }body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #0a0a0a;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+.container {
+  background: #1c1c1c;
+  padding: 20px;
+  border-radius: 16px;
+  animation: glow 2s infinite ease-in-out;
+  text-align: center;
+  width: 90%;
+  max-width: 500px;
+  border: 3px solid #00ff00;
+}
+h2 {
+  color: #00ffe1;
+  margin-bottom: 20px;
+}
+input, button {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  font-size: 16px;
+  border-radius: 10px;
+  border: none;
+}
+button {
+  background-color: #00ffe1;
+  color: black;
+  font-weight: bold;
+  cursor: pointer;
+}
+.result {
+  margin-top: 20px;
+  font-size: 26px;
+  font-weight: bold;
+  color: #ffeb3b;
+  text-shadow: 0 0 10px #ffeb3b;
+}
+.dice {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 20px;
+}
+.die {
+  width: 60px;
+  height: 60px;
+  background-color: white;
+  color: black;
+  font-size: 32px;
+  font-weight: bold;
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 0 10px #00ff00;
+  border: 2px solid #00ff00;
+}
+  </style>
+</head>
+<body>
+  <div class="container" id="loginBox">
+    <h1>@KanHaoDATA</h1>
+    <input id="keyInput" placeholder="Nhập key..." />
+    <button onclick="checkKey()">Đăng nhập</button>
+    <button onclick="registerKey()">Đăng ký</button>
+  </div>
+
+  <div class="container" id="mainApp" style="display:none;">
+    <button class="logout-btn" onclick="logout()">Đăng xuất</button>
+    <h1>@KanHaoDATA</h1>
+    <input type="text" id="md5" placeholder="Nhập chuỗi MD5 để phân tích...">
+    <button onclick="analyze()">Phân Tích</button>
+    <div class="result" id="output">...</div>
+    <div class="dice" id="dice"></div>
+    <div class="history" id="history"></div>
+  </div>
+  
+  <script>
+    function getKeyStore() {
+      return JSON.parse(localStorage.getItem("keys") || "{}");
+    }
+
+    function saveKeyStore(store) {
+      localStorage.setItem("keys", JSON.stringify(store));
+    }
+
+    function checkKey() {
+      const key = document.getElementById("keyInput").value.trim();
+      const keyStore = getKeyStore();
+      const data = keyStore[key];
+      if (!data) return alert("Key không tồn tại!");
+      if (!data.expire) return alert("Key chưa được kích hoạt!");
+      const now = new Date().toISOString().slice(0, 10);
+      if (data.expire < now) return alert("Key đã hết hạn!");
+
+      localStorage.setItem("currentKey", key);
+      showApp();
+    }
+
+    function registerKey() {
+      const key = document.getElementById("keyInput").value.trim();
+      if (!key) return alert("Vui lòng nhập key để đăng ký!");
+      const keyStore = getKeyStore();
+      if (keyStore[key]) return alert("Key đã tồn tại!");
+      keyStore[key] = {}; // chưa có expire
+      saveKeyStore(keyStore);
+      alert("Đăng ký thành công. Chờ admin kích hoạt.");
+    }
+
+    function logout() {
+      localStorage.removeItem("currentKey");
+      location.reload();
+    }
+
+    function showApp() {
+      document.getElementById("loginBox").style.display = "none";
+      document.getElementById("mainApp").style.display = "block";
+      document.getElementById("keyDisplay").textContent = localStorage.getItem("currentKey") || "";
+    }
+
+    window.onload = () => {
+      const savedKey = localStorage.getItem("currentKey");
+      const keyStore = getKeyStore();
+      if (savedKey && keyStore[savedKey] && keyStore[savedKey].expire >= new Date().toISOString().slice(0, 10)) {
+        showApp();
+      }
+    };
+
+    const historyData = [];
+
+    function analyze() {
+      const md5 = document.getElementById('md5').value.trim().toLowerCase();
+      const output = document.getElementById('output');
+      const diceEl = document.getElementById('dice');
+      const historyEl = document.getElementById('history');
+
+      if (!/^[a-f0-9]{32}$/.test(md5)) {
+        output.innerText = 'Chuỗi MD5 không hợp lệ!';
+        diceEl.innerHTML = '';
+        return;
+      }
+
+      const nums = [
+        parseInt(md5.slice(0, 2), 16) % 6 + 1,
+        parseInt(md5.slice(2, 4), 16) % 6 + 1,
+        parseInt(md5.slice(4, 6), 16) % 6 + 1,
+      ];
+      const total = nums.reduce((a, b) => a + b, 0);
+      const result = total > 10 ? 'TÀI' : 'XỈU';
+
+      output.innerText = ` ${result}`;
+      diceEl.innerHTML = nums.map(n => `<div class="die">${n}</div>`).join('');
+    }
+  </script></body>
+</html>
